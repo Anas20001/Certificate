@@ -1,0 +1,343 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# ## Energy saved from recycling
+# <p>Did you know that recycling saves energy by reducing or eliminating the need to make materials from scratch? For example, aluminum can manufacturers can skip the energy-costly process of producing aluminum from ore by cleaning and melting recycled cans. Aluminum is classified as a non-ferrous metal.</p>
+# <p>Singapore has an ambitious goal of becoming a zero-waste nation. The amount of waste disposed of in Singapore has increased seven-fold over the last 40 years. At this rate, Semakau Landfill, Singapore’s only landfill, will run out of space by 2035. Making matters worse, Singapore has limited land for building new incineration plants or landfills.</p>
+# <p>The government would like to motivate citizens by sharing the total energy that the combined recycling efforts have saved every year. They have asked you to help them.</p>
+# <p>You have been provided with three datasets. The data come from different teams, so the names of waste types may differ.</p>
+# <div style="background-color: #efebe4; color: #05192d; text-align:left; vertical-align: middle; padding: 15px 25px 15px 25px; line-height: 1.6;">
+#     <div style="font-size:16px"><b>datasets/wastestats.csv - Recycling statistics per waste type for the period 2003 to 2017</b>
+#     </div>
+#     <div>Source: <a href="https://www.nea.gov.sg/our-services/waste-management/waste-statistics-and-overall-recycling">Singapore National Environment Agency</a></div>
+# <ul>
+#     <li><b>waste_type: </b>The type of waste recycled.</li>
+#     <li><b>waste_disposed_of_tonne: </b>The amount of waste that could not be recycled (in metric tonnes).</li>
+#     <li><b>total_waste_recycle_tonne: </b>The amount of waste that could be recycled (in metric tonnes).</li>
+#     <li><b>total_waste_generated: </b>The total amount of waste collected before recycling (in metric tonnes).</li>
+#     <li><b>recycling_rate: </b>The amount of waste recycled per tonne of waste generated.</li>
+#     <li><b>year: </b>The recycling year.</li>
+# </ul>
+#     </div>
+# <div style="background-color: #efebe4; color: #05192d; text-align:left; vertical-align: middle; padding: 15px 25px 15px 25px; line-height: 1.6; margin-top: 17px;">
+#     <div style="font-size:16px"><b>datasets/2018_2019_waste.csv - Recycling statistics per waste type for the period 2018 to 2019</b>
+#     </div>
+#     <div> Source: <a href="https://www.nea.gov.sg/our-services/waste-management/waste-statistics-and-overall-recycling">Singapore National Environment Agency</a></div>
+# <ul>
+#     <li><b>Waste Type: </b>The type of waste recycled.</li>
+#     <li><b>Total Generated: </b>The total amount of waste collected before recycling (in thousands of metric tonnes).</li> 
+#     <li><b>Total Recycled: </b>The amount of waste that could be recycled. (in thousands of metric tonnes).</li>
+#     <li><b>Year: </b>The recycling year.</li>
+# </ul>
+#     </div>
+# <div style="background-color: #efebe4; color: #05192d; text-align:left; vertical-align: middle; padding: 15px 25px 15px 25px; line-height: 1.6; margin-top: 17px;">
+#     <div style="font-size:16px"><b>datasets/energy_saved.csv -  Estimations of the amount of energy saved per waste type in kWh</b>
+#     </div>
+# <ul>
+#     <li><b>material: </b>The type of waste recycled.</li>
+#     <li><b>energy_saved: </b>An estimate of the energy saved (in kiloWatt hour) by recycling a metric tonne of waste.</li> 
+#     <li><b>crude_oil_saved: </b>An estimate of the number of barrels of oil saved by recycling a metric tonne of waste.</li>
+# </ul>
+# 
+# </div>
+# <pre><code>
+# </code></pre>
+
+# In[2]:
+
+
+import pandas as pd 
+import numpy as np
+
+
+# In[3]:
+
+
+waste17 = pd.read_csv("datasets/wastestats.csv")
+waste19 = pd.read_csv("datasets/2018_2019_waste.csv")
+energy = pd.read_csv("datasets/energy_saved.csv")
+
+
+# # We'll start by wrangling our first dataset 
+
+# In[4]:
+
+
+waste17.head()
+
+
+# In[5]:
+
+
+waste17.info()
+
+
+# In[6]:
+
+
+waste17.drop(['waste_disposed_of_tonne', 'total_waste_generated_tonne', 'recycling_rate'], axis=1, inplace = True)
+
+
+# In[7]:
+
+
+waste17.head()
+
+
+# In[8]:
+
+
+waste17 = waste17[['waste_type', 'year', 'total_waste_recycled_tonne']] 
+waste17.head()
+
+
+# In[9]:
+
+
+waste17.columns = ['Waste_type', 'Year', 'Total_recycled']
+
+
+# In[10]:
+
+
+x = waste17[(waste17['Waste_type'] == 'Plastics')  | (waste17['Waste_type'] == 'Glass') | (waste17['Waste_type'] == 'Ferrous Metal') | (waste17['Waste_type'] == 'Non-Ferrous Metal')]
+x
+
+
+# In[11]:
+
+
+x.reset_index(drop=True)
+
+
+# In[12]:
+
+
+x.shape
+
+
+# # let's start with our second dataset 
+
+# In[13]:
+
+
+waste19.head()
+
+
+# In[14]:
+
+
+waste19.info()
+
+
+# In[15]:
+
+
+waste19.columns = ['Waste_type', 'Total_generated', 'Total_recycled', 'Year']
+
+
+# In[16]:
+
+
+waste19.drop('Total_generated', axis =1, inplace = True )
+
+
+# In[17]:
+
+
+waste19.Total_recycled = waste19.Total_recycled * 1000
+
+
+# In[18]:
+
+
+waste19.head()
+
+
+# In[19]:
+
+
+y = waste19[(waste19['Waste_type'] == 'Plastics')  | (waste19['Waste_type'] == 'Glass') | (waste19['Waste_type'] == 'Ferrous Metal') | (waste19['Waste_type'] == 'Non-Ferrous Metal')]
+y
+
+
+# In[20]:
+
+
+y.reset_index(drop=True)
+y.shape
+
+
+# > After we wrangled both our datasets its time to merge both and to order them 
+
+# In[21]:
+
+
+annual_energy_savings = pd.concat([x, y], join = 'outer', ignore_index = True)
+annual_energy_savings.head()
+
+
+# In[22]:
+
+
+annual_energy_savings.info()
+
+
+# In[23]:
+
+
+annual_energy_savings['year'] = annual_energy_savings.Year.astype('int64')
+annual_energy_savings.drop('Year', axis=1, inplace=True)
+
+
+# In[24]:
+
+
+annual_energy_savings = annual_energy_savings[annual_energy_savings.year > 2014]
+
+
+# In[25]:
+
+
+annual_energy_savings.shape
+
+
+# In[26]:
+
+
+annual_energy_savings
+
+
+# # energy_saved dataset
+
+# In[ ]:
+
+
+
+
+
+# In[27]:
+
+
+energy.head()
+
+
+# In[28]:
+
+
+energy.info()
+
+
+# In[29]:
+
+
+energy.columns = ['0', '1', '2', '3', '4', '5']
+
+
+# In[30]:
+
+
+energy.head()
+
+
+# In[31]:
+
+
+energy.set_index('0', inplace =True)
+energy.head()
+
+
+# In[32]:
+
+
+energy = energy.T
+energy.head()
+
+
+# In[33]:
+
+
+energy.columns = ['1 barrel oil is approximately 159 litres of oil', 'nan', 'Waste_type', 'Energy_saved', 'Oil_saved']
+
+
+# In[34]:
+
+
+energy.drop(['1 barrel oil is approximately 159 litres of oil', 'nan'], axis=1, inplace=True)
+
+
+# In[35]:
+
+
+energy.head()
+
+
+# In[36]:
+
+
+energy = energy[(energy['Waste_type'] == 'Plastic')  | (energy['Waste_type'] == 'Glass') | (energy['Waste_type'] == 'Ferrous Metal') | (energy['Waste_type'] == 'Non-Ferrous Metal')]
+energy
+
+
+# In[37]:
+
+
+energy.drop("Oil_saved",axis=1, inplace = True)
+
+
+# In[38]:
+
+
+energy
+
+
+# # Comining both the waste dataset with energy dataset 
+
+# In[39]:
+
+
+annual_energy_savings
+
+
+# In[40]:
+
+
+annual_energy_savings.columns
+
+
+# In[41]:
+
+
+def factor_for_type(x): 
+    if x== 'Glass': return 42 
+    elif x == 'Plastics': return 5774 
+    elif x== 'Ferrous Metal': return 642 
+    elif x == 'Non-Ferrous Metal': return 14000 
+    else: return np.nan
+
+
+# In[42]:
+
+
+annual_energy_savings['factor'] = annual_energy_savings['Waste_type'].map(factor_for_type)
+
+
+# In[43]:
+
+
+annual_energy_savings['total_energy_saved'] = annual_energy_savings['Total_recycled'] * annual_energy_savings['factor']
+
+
+# In[44]:
+
+
+annual_energy_savings = annual_energy_savings.groupby(['year'])[ 'total_energy_saved'].sum().to_frame()
+
+
+# In[45]:
+
+
+annual_energy_savings
+
+
+# > We can drop out some columns will not be used 
